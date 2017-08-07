@@ -106,7 +106,7 @@ namespace NPCENKO {
                         } );
                     } else {
 #if CodeViewer
-                        AddChat( new Chat( chatLogEntry.Code + " " + chatLogEntry.Line, Chat.Type.Debug ) );
+                        AddChat( new Chat( chatLogEntry.Code + " " + chatLogEntry.Line, Chat.ReservedColor.Debug ) );
 #endif
                     }
                 }
