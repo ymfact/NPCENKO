@@ -13,6 +13,8 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Threading;
+using IniParser;
+using IniParser.Model;
 
 namespace NPCENKO {
     public partial class MainWindow : Window {
@@ -21,8 +23,19 @@ namespace NPCENKO {
         private readonly DispatcherTimer printTimer = new DispatcherTimer();
         private readonly Queue<Chat> chatQueue = new Queue<Chat>();
 
+        private readonly Dictionary<string, string> ChatCodes = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> EchoCodes = new Dictionary<string, string>();
+
         public MainWindow() {
             InitializeComponent();
+
+            IniData ini = new FileIniDataParser().ReadFile( "NPCENKO.ini" );
+            foreach( KeyData keyData in ini.Sections[ "ChatCodes" ] ) {
+                ChatCodes.Add( keyData.KeyName, keyData.Value );
+            }
+            foreach( KeyData keyData in ini.Sections[ "EchoCodes" ] ) {
+                EchoCodes.Add( keyData.KeyName, keyData.Value );
+            }
             
             StartSharlayan();
 
@@ -33,7 +46,6 @@ namespace NPCENKO {
             scanTimer.Interval = TimeSpan.FromMilliseconds( 250 );
             scanTimer.Tick += ScanTimerElapsed;
             scanTimer.Start();
-            
         }
 
         public void Dispose() {
@@ -77,21 +89,22 @@ namespace NPCENKO {
                 _previousOffset = readResult.PreviousOffset;
 
                 foreach( var chatLogEntry in readResult.ChatLogEntries ) {
-                    if( chatLogEntry.Code == "003D" ) {
-                        AddChat( new Chat( chatLogEntry.Line, Chat.Type.NPC ) );
-                        AddTranslatedChat( chatLogEntry.Line, Chat.Type.AutomaticallyTranslated );
-                    } else if( chatLogEntry.Code == "0038" ) {
-                        AddChat( new Chat( chatLogEntry.Line, Chat.Type.Echo ) );
-                        AddTranslatedChat( chatLogEntry.Line, Chat.Type.ManuallyTranslated );
+                    if( ChatCodes.ContainsKey( chatLogEntry.Code ) ) {
+                        AddChat( new Chat( chatLogEntry.Line, ChatCodes[chatLogEntry.Code] ) );
+                        AddTranslatedChat( chatLogEntry.Line, Chat.ReservedColor.AutomaticallyTranslated );
+                    } else if( EchoCodes.ContainsKey( chatLogEntry.Code ) ) {
+                        AddChat( new Chat( chatLogEntry.Line, EchoCodes[ chatLogEntry.Code ] ) );
+                        AddTranslatedChat( chatLogEntry.Line, Chat.ReservedColor.ManuallyTranslated );
                         HTTP.FindQuest( chatLogEntry.Line, ( questText ) => {
                             if( string.IsNullOrWhiteSpace( questText ) ){
+
                             } else {
-                                AddTranslatedChat( questText, Chat.Type.AutomaticallyTranslated );
+                                AddTranslatedChat( questText, Chat.ReservedColor.AutomaticallyTranslated );
                             }
                         } );
                     } else {
 #if CodeViewer
-                        AddChat( new Chat( chatLogEntry.Code + " " + chatLogEntry.Line, Chat.Type.All ) );
+                        AddChat( new Chat( chatLogEntry.Code + " " + chatLogEntry.Line, Chat.Type.Debug ) );
 #endif
                     }
                 }
@@ -117,7 +130,6 @@ namespace NPCENKO {
                         if( string.IsNullOrWhiteSpace( chat.Text ) ) {
                             continue;
                         }
-
                         TextRange textRange = new TextRange( ctlTextBox.Document.ContentEnd, ctlTextBox.Document.ContentEnd );
                         textRange.Text = chat.Text + "\n";
                         textRange.ApplyPropertyValue( TextElement.ForegroundProperty, chat.Brush );
@@ -156,21 +168,21 @@ namespace NPCENKO {
                 return;
             }
             lastSelection = selection;
-            AddTranslatedChat( selection, Chat.Type.ManuallyTranslated, selection + " => {0}" );
+            AddTranslatedChat( selection, Chat.ReservedColor.ManuallyTranslated, selection + " => {0}" );
         }
 
-        private void AddTranslatedChat( string text, Chat.Type chatType) {
+        private void AddTranslatedChat( string text, Chat.ReservedColor chatType) {
             AddTranslatedChat( text, chatType, "{0}", ()=>{ } );
         }
 
-        private void AddTranslatedChat( string text, Chat.Type chatType, Action callback ) {
+        private void AddTranslatedChat( string text, Chat.ReservedColor chatType, Action callback ) {
             AddTranslatedChat( text, chatType, "{0}", callback );
         }
-        private void AddTranslatedChat( string text, Chat.Type chatType, string format ) {
+        private void AddTranslatedChat( string text, Chat.ReservedColor chatType, string format ) {
             AddTranslatedChat( text, chatType, format, ()=> { } );
         }
 
-        private void AddTranslatedChat( string text, Chat.Type chatType, string format, Action callback ) {
+        private void AddTranslatedChat( string text, Chat.ReservedColor chatType, string format, Action callback ) {
 #if !CodeViewer
             HTTP.Translate( text, ( translated ) => {
                 if( string.IsNullOrWhiteSpace( translated ) ) {
