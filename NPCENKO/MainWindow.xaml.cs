@@ -29,6 +29,8 @@ namespace NPCENKO {
         public MainWindow() {
             InitializeComponent();
 
+            Application.Current.MainWindow.Topmost = true;
+
             IniData ini = new FileIniDataParser().ReadFile( "NPCENKO.ini" );
             foreach( KeyData keyData in ini.Sections[ "ChatCodes" ] ) {
                 ChatCodes.Add( keyData.KeyName, keyData.Value );
