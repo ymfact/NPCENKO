@@ -1,27 +1,39 @@
 ﻿// Copyright © 2016 RyuaNerin
 // Copyright © 2017 ymfact
 
+using System.Collections.Generic;
 using System.Windows.Media;
 
 namespace NPCENKO {
     public class Chat {
-        public Chat( string text, Type type ) {
+        public Chat( string text, ReservedColor type ) {
             this.text = text;
-            if( type == Type.NPC ) {
-                brush = greenBrush;
+            if( type == ReservedColor.AutomaticallyTranslated ) {
+                brush = GetBrush( "#f7f7f7" );
             }
-            if( type == Type.Echo ) {
-                brush = grayBrush;
+            if( type == ReservedColor.ManuallyTranslated ) {
+                brush = GetBrush( "#ffa666" );
             }
-            if( type == Type.AutomaticallyTranslated ) {
-                brush = whiteBrush;
+            if( type == ReservedColor.Debug ) {
+                brush = GetBrush( "#cccccc" );
             }
-            if( type == Type.ManuallyTranslated ) {
-                brush = redBrush;
+        }
+
+        public Chat( string text, string color ) {
+            this.text = text;
+            this.brush = GetBrush( color );
+        }
+
+        private static Brush GetBrush( string color ) {
+            Brush brush;
+            if( brushes.ContainsKey( color ) ) {
+                brush = brushes[ color ];
+            }else {
+                brush = new SolidColorBrush( (Color) ColorConverter.ConvertFromString( color ) );
+                brush.Freeze();
+                brushes.Add( color, brush );
             }
-            if( type == Type.All ) {
-                brush = grayBrush;
-            }
+            return brush;
         }
 
         private readonly string text;
@@ -30,11 +42,8 @@ namespace NPCENKO {
         public string Text { get { return text; } }
         public Brush Brush { get { return brush; } }
 
-        private static readonly Brush greenBrush = new SolidColorBrush( (Color) ColorConverter.ConvertFromString( "#acd848" ) );
-        private static readonly Brush grayBrush = new SolidColorBrush( (Color) ColorConverter.ConvertFromString( "#cccccc" ) );
-        private static readonly Brush whiteBrush = new SolidColorBrush( (Color) ColorConverter.ConvertFromString( "#f7f7f7" ) );
-        private static readonly Brush redBrush = new SolidColorBrush( (Color) ColorConverter.ConvertFromString( "#ffa666" ) );
+        private static readonly Dictionary<string, Brush> brushes = new Dictionary<string, Brush>();
 
-        public enum Type { NPC, Echo, AutomaticallyTranslated, ManuallyTranslated, All };
+        public enum ReservedColor { AutomaticallyTranslated, ManuallyTranslated, Debug };
     }
 }

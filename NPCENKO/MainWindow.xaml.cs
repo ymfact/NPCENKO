@@ -66,7 +66,12 @@ namespace NPCENKO {
                 }
                 isScanning = true;
 
-                var readResult = Reader.GetChatLog( _previousArrayIndex, _previousOffset );
+                ChatLogReadResult readResult = null;
+                try {
+                    readResult = Reader.GetChatLog( _previousArrayIndex, _previousOffset );
+                } catch( OverflowException ) {
+                    return;
+                }
 
                 _previousArrayIndex = readResult.PreviousArrayIndex;
                 _previousOffset = readResult.PreviousOffset;
