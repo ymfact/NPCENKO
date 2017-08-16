@@ -14,8 +14,6 @@ namespace NPCENKO {
 
         private static string _baseUrl = "http://translate.google.com/translate_t?hl=&ie=UTF-8&text={0}&sl={1}&tl={2}";
 
-        private static HttpClient HTTPClient = new HttpClient();
-
         private static object httpLock = new object();
 
         public static void Translate( string textToTranslate, Action<string> callback ) {
@@ -23,12 +21,12 @@ namespace NPCENKO {
         }
         public static void Translate( string textToTranslate, string inLang, string outLang, Action<string> callback ) {
             string url = string.Format( _baseUrl, textToTranslate, inLang, outLang );
-            HTTPClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.70 Safari/533.4" );
-
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.70 Safari/533.4" );
             Dispatcher.CurrentDispatcher.Invoke( async () => {
                 try {
                     string result = string.Empty;
-                    using( var stream = await HTTPClient.GetStreamAsync( url ).ConfigureAwait( false ) ) {
+                    using( var stream = await httpClient.GetStreamAsync( url ).ConfigureAwait( false ) ) {
                         var doc = new HtmlDocument();
                         doc.Load( stream, Encoding.UTF8 );
 
@@ -48,12 +46,13 @@ namespace NPCENKO {
 
         public static void FindQuest( string text, Action<string> callback ) {
             string url = string.Format( questBaseUrl, text.Replace( ' ', '_' ) );
-            HTTPClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.70 Safari/533.4" );
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation( "User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.70 Safari/533.4" );
 
             Dispatcher.CurrentDispatcher.Invoke( async () => {
                 try {
                     string result = string.Empty;
-                    using( var stream = await HTTPClient.GetStreamAsync( url ).ConfigureAwait( false ) ) {
+                    using( var stream = await httpClient.GetStreamAsync( url ).ConfigureAwait( false ) ) {
                         var doc = new HtmlDocument();
                         doc.Load( stream, Encoding.UTF8 );
                         for( int i = 1; i < 9; i++ ) {
