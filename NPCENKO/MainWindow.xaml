@@ -26,6 +26,7 @@
                 Background="Black"
                 IsReadOnly="True"
                 HorizontalAlignment="Stretch"
+                FontSize="14"
                 Style="{StaticResource ReadOnlyTextBox}"
                 PreviewMouseUp="TextMouseUp">
             <RichTextBox.Resources>
